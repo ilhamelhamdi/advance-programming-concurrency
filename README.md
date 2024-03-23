@@ -84,3 +84,10 @@ fn handle_connection(mut stream: TcpStream) {
 ```
 
  
+
+## Commit 4 Reflection : Simulation slow response
+![Commit 4 screen capture](/assets/images/commit-4.png)
+Pada commit ini, server disimulasikan mengembalikan _response_ dengan sangat lambat. _Client_ akan menerima response yang lambat apabila melakukan koneksi dengan path `/sleep`. Namun, _response_ lambat juga tidak hanya dialami oleh _client_ yang mengakses `/sleep`, akan tetapi dialami oleh _client_ lainnya. Hal ini terjadi apabila salah satu _client_ mengakses `/sleep`. 
+
+Karena server ini _single-threaded_, hanya satu _request_ yang akan dilayani dalam satu waktu. Saat path `/sleep` diakses, _thread_ di server akan melakukan sleep selama 10 detik. Jika hal itu terjadi, _request_ dari _client_ lain tidak akan dilayani selama _main thread_ tidak berjalan. Oleh karena itu, diperlukan _multi-threading_ untuk melayani beberapa _client_ sekaligus.
+
