@@ -18,3 +18,12 @@ fn handle_connection(mut stream: TcpStream) {
 Fungsi `handle_connection` berfungsi untuk menerima koneksi request TCP dari _client_. Koneksi _client_ tersebut direpresentasikan dalam objek _struct_ `TcpStream`. Kemudian, agar dapat diolah secara efisien, objek tersebut dibungkus oleh _struct_ `BufReader`. Lalu, objek `BufReader` tersebut dikonversi menjadi array/vector yang berisi baris-baris string dari koneksi _client_. Baris-baris tersebut juga difilter terlebih dahulu sehingga tidak ada baris yang kosong. Kemudian, baris-baris string tersebut dicetak ke dalam _console_. 
 
 Dalam proses konversi tersebut, terdapat method `map` dan `take_while`. Kedua method tersebut menerima argumen berupa _closure_. Konsep _closure_ dapat ditemui dalam pembahasan _functional programming_. Singkatnya, _closure_ merupakan ekspresi _inline function_ yang dapat di-passing sebagai nilai variable atau argumen fungsi lain. Dalam Rust, _closure_ diimplementasikan menggunakan syntax `|arg: arg_type| {body/return_value}` atau `|arg: arg_type| return_value`. 
+
+## Commit 2 Reflection : Returning HTML
+![Commit 2 screen capture](/assets/images/commit-2.png)
+Setelah dimodifikasi, kini fungsi `handle_connection` tidak hanya dapat menerima koneksi request, tetapi juga dapat mengembalikan _response_ berupa format HTML kepada _client_ . Konten HTML tersebut dibaca dari file `hello.html` dengan menggunakan `fs::read_to_string` dan disimpan dalam variabel `contents` berupa String. 
+
+Selain itu konten HTML, dalam _response body_ juga dituliskan _status line_ dan _content length_. _Status line_ diperlukan untuk memberikan HTTP _status code_ kepada _client_ sebagai sinyal berhasil atau tidaknya koneksi. Berikut merupakan beberapa status kode HTTP yang dapat digunakan : 2xx untuk OK, 3xx untuk Redirection, 4xx untuk Client Bad Request, dan 5xx untuk Server Error.
+
+Adapun header `Content length: ` diperlukan agar _client_ dapat menguji validitas _response body_ dengan mengecek kesesuaian panjangnya. Kemudian _macro_ `format!` digunakan untuk melakukan _string interpolation_ untuk menggabungkan _status line_, header `Content length`, dan body dari HTML. Hasil interpolasi string ini kemudian dikirimkan kepada _client_ melalui koneksi TCP dengan menggunakan `stream.write_all()`.
+
