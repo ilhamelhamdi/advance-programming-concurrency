@@ -91,3 +91,9 @@ Pada commit ini, server disimulasikan mengembalikan _response_ dengan sangat lam
 
 Karena server ini _single-threaded_, hanya satu _request_ yang akan dilayani dalam satu waktu. Saat path `/sleep` diakses, _thread_ di server akan melakukan sleep selama 10 detik. Jika hal itu terjadi, _request_ dari _client_ lain tidak akan dilayani selama _main thread_ tidak berjalan. Oleh karena itu, diperlukan _multi-threading_ untuk melayani beberapa _client_ sekaligus.
 
+
+
+##  Commit 5 Reflection : Multithreaded Server
+_Threadpool_ merupakan sekumpulan _thread_ yang telah diinisiasi dan siap untuk melayani tugas-tugas.  Ketika sebuah program menerima tugas baru, ia menugaskan salah satu dari thread-thread dalam pool untuk menangani tugas tersebut, dan thread tersebut akan menjalankan proses pemrosesan. Sementara itu, thread-thread lain dalam pool tetap tersedia untuk menangani tugas-tugas lain yang masuk, bahkan ketika thread pertama sedang sibuk menyelesaikan tugasnya. Ketika thread pertama selesai menyelesaikan tugasnya, ia kembali ke pool thread yang tersedia, siap untuk menangani tugas baru. Dengan penerapan thread pool, program dapat memproses tugas secara paralel.
+
+Pada commit ini, implementasi _thread pool_ menggunakan struct `ThreadPool` dan`Worker` serta type `Job`. Struct `Threadpool` berfungsi untuk menyimpan dan menginisiasi seluruh objek worker sebanyak jumlah tertentu. Struct `Worker` berfungsi untuk mengirimkan kode tugas (`Job`) dari _thread pool_ ke suatu _thread_. Adapun _type_ `Job` merupakan suatu tipe data yang mengimplementasikan _traits_ yang dapat diterima oleh `thread::spawn`. Komunikasi antara `ThreadPool` dan `Worker` dilakukan dengan teknik _message passing_. Dalam hal ini, `ThreadPool` bertindak sebagai _sender_ dan `Worker` sebagai _receiver_. Ketika ada suatu _request_ masuk, `ThreadPool` mengirimkan _message_ berupa suatu `Job` ke `Worker` untuk kemudian dijalankan di dalam suatu _thread_.
