@@ -27,3 +27,60 @@ Selain itu konten HTML, dalam _response body_ juga dituliskan _status line_ dan 
 
 Adapun header `Content length: ` diperlukan agar _client_ dapat menguji validitas _response body_ dengan mengecek kesesuaian panjangnya. Kemudian _macro_ `format!` digunakan untuk melakukan _string interpolation_ untuk menggabungkan _status line_, header `Content length`, dan body dari HTML. Hasil interpolasi string ini kemudian dikirimkan kepada _client_ melalui koneksi TCP dengan menggunakan `stream.write_all()`.
 
+
+
+## Commit 3 Reflection : Validating request and selectively responding
+![Commit 3 screen capture](/assets/images/commit-3.png)
+
+Pada commit ini, fungsi `handle_connection` dapat melakukan seleksi _request_ dari _client_. Apabila _client_ melakukan koneksi dengan _root path_, server mengembalikan `hello.html`. Jika selain itu, server mengembalikan _response_ `404.html`. Untuk melakukan seleksi _request_, server membaca baris pertama _request_ dengan menggunakan `buf_reader.lines().next().unwrap().unwrap()`. Berikut merupakan kodenya.
+
+Sebelum refactoring
+```rust
+fn handle_connection(mut stream: TcpStream) {
+    let buf_reader = BufReader::new(&mut stream);
+    let request_line = buf_reader.lines().next().unwrap().unwrap();
+
+    if request_line == "GET / HTTP/1.1" {
+        let status_line = "HTTP/1.1 200 OK";
+        let contents = fs::read_to_string("hello.html").unwrap();
+        let length = contents.len();
+
+        let response = format!("{status_line}\r\nContent-Length: {length}\r\n\r\n{contents}");
+
+        stream.write_all(response.as_bytes()).unwrap();
+    } else {
+        let status_line = "HTTP/1.1 404 NOT FOUND";
+        let contents = fs::read_to_string("404.html").unwrap();
+        let length = contents.len();
+
+        let response = format!("{status_line}\r\nContent-Length: {length}\r\n\r\n{contents}");
+
+        stream.write_all(response.as_bytes()).unwrap();
+    }
+}
+```
+
+Dari kode di atas, kita dapat menemukan duplikasi kode, yaitu kode untuk membaca file dan membuat string _response_ serta mengirimkannya ke `stream`. Untuk itu, kita dapat melakukan refactoring sehingga mengurangi duplikasi kode.  
+
+Setelah refactoring
+```rust
+fn handle_connection(mut stream: TcpStream) {
+    let buf_reader = BufReader::new(&mut stream);
+    let request_line = buf_reader.lines().next().unwrap().unwrap();
+
+    let (status_line, filename) = if request_line == "GET / HTTP/1.1" {
+        ("HTTP/1.1 200 OK", "hello.html")
+    } else {
+        ("HTTP/1.1 404 NOT FOUND", "404.html")
+    };
+
+    let contents = fs::read_to_string(filename).unwrap();
+    let length = contents.len();
+
+    let response = format!("{status_line}\r\nContent-Length: {length}\r\n\r\n{contents}");
+
+    stream.write_all(response.as_bytes()).unwrap();
+}
+```
+
+ 
